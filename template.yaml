@@ -115,26 +115,30 @@ Resources:
           KeyType: "RANGE"
       BillingMode: "PAY_PER_REQUEST"
 
-  UserRegistrationLambda:
+  ChatsTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "Chats"
+      AttributeDefinitions:
+        - AttributeName: "ChatID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "ChatID"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+
+  CreateChatLambda:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.lambda_handler
+      Handler: create_chat.lambda_handler
       Runtime: python3.11
-      CodeUri: ./backend/src/user_registration/
+      CodeUri: ./backend/src/create_chat/
       MemorySize: 128
       Timeout: 600
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          USERS_TABLE: !Ref UsersTable
-
-  CognitoUserPoolTrigger:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      FunctionName: !GetAtt UserRegistrationLambda.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: "cognito-idp.amazonaws.com"
-      SourceArn: "arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l"
+          CHATS_TABLE: !Ref ChatsTable
 
   AskLambda:
     Type: "AWS::Serverless::Function"
@@ -147,7 +151,7 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          TRANSCRIPTS_TABLE: !Ref QuestionsTable
+          QUESTION_TABLE: !Ref QuestionsTable
 
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -155,6 +159,54 @@ Resources:
       Name: !Sub "${AWS::StackName}-API"
       Description: "API Gateway for Ai Study Buddy application"
       FailOnWarnings: true
+
+  CreateChatResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "createChat"
+      RestApiId: !Ref ApiGateway
+
+  CreateChatMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      ResourceId: !Ref CreateChatResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS_PROXY"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateChatLambda.Arn}/invocations
+        Credentials: !GetAtt ApiGatewayRole.Arn
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  CreateChatOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref CreateChatResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PUT,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
 
   AskResource:
     Type: AWS::ApiGateway::Resource
@@ -282,6 +334,8 @@ Resources:
     DependsOn:
       - AskInvokeLambda
       - AskOptionsMethod
+      - CreateChatMethod
+      - CreateChatOptionsMethod
       - GetUserMethod
       - GetUserOptionsMethod
 
@@ -295,3 +349,8 @@ Outputs:
     Description: "API Gateway endpoint URL for Prod stage"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user"
+
+  CreateChatUrl:
+    Description: "API Gateway endpoint URL for creating new chat"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat"

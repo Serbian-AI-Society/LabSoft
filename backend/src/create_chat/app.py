@@ -4,13 +4,12 @@ import uuid
 import os
 from datetime import datetime
 from pytz import timezone
-from ai_response import get_gpt_answer
 import logging
 
 # Initialize DynamoDB resource
-DYNAMODB_TABLE = os.getenv("QUESTION_TABLE")
+CHATS_TABLE = os.getenv("CHATS_TABLE")
 dynamodb = boto3.resource("dynamodb")
-questions_table = dynamodb.Table(DYNAMODB_TABLE)
+chats_table = dynamodb.Table(CHATS_TABLE)
 
 # Configure logging
 logger = logging.getLogger()
@@ -22,41 +21,36 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
         user_id = body.get("UserID")
-        chat_id = body.get("ChatID")
-        question = body.get("Question")
+        chat_name = body.get("ChatName")
+        chat_topic = body.get("ChatTopic")
 
-        if not user_id or not question or not chat_id:
-            logger.error("Missing UserID, ChatID or Question in the request")
+        if not user_id or not chat_name or not chat_topic:
+            logger.error("Missing UserID, ChatName or ChatTopic in the request")
             return {
                 "statusCode": 400,
                 "body": json.dumps(
-                    {"error": "UserID, ChatID and Question are required"}
+                    {"error": "UserID, ChatName, and ChatTopic are required"}
                 ),
             }
 
-        logger.info("Processing question for user: %s", user_id)
-        ai_response = get_gpt_answer(question)
-
-        # Generate UUID for QuestionID
-        question_id = str(uuid.uuid4())
+        chat_id = str(uuid.uuid4())
 
         # Get current time in Central European Time (CET)
         cet = timezone("Europe/Belgrade")
         current_time = datetime.now(cet).isoformat()
 
-        # Save question and AI response to DynamoDB
-        questions_table.put_item(
+        # Save new chat session to DynamoDB
+        chats_table.put_item(
             Item={
-                "QuestionID": question_id,
-                "UserID": user_id,
                 "ChatID": chat_id,
-                "Question": question,
+                "UserID": user_id,
+                "ChatName": chat_name,
+                "ChatTopic": chat_topic,
                 "Timestamp": current_time,
-                "AIResponse": ai_response,
             }
         )
 
-        logger.info("Successfully processed question for user: %s", user_id)
+        logger.info("Successfully created chat session for user: %s", user_id)
         return {
             "statusCode": 200,
             "headers": {
@@ -64,10 +58,10 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "POST",
             },
-            "body": json.dumps({"Response": ai_response}),
+            "body": json.dumps({"ChatID": chat_id}),
         }
     except Exception as e:
-        logger.exception("Error processing request: %s", str(e))
+        logger.exception("Error creating chat session: %s", str(e))
         return {
             "statusCode": 500,
             "body": json.dumps({"error": "An error occurred. Please try again later."}),
