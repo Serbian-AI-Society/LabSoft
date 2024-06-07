@@ -137,7 +137,7 @@ Resources:
           Projection:
             ProjectionType: "ALL"
 
-    ChatsTable:
+  ChatsTable:
     Type: "AWS::DynamoDB::Table"
     Properties:
       TableName: "Chats"
@@ -161,7 +161,6 @@ Resources:
               KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
-
 
   CreateChatLambda:
     Type: AWS::Serverless::Function
