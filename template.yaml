@@ -49,6 +49,14 @@ Resources:
               Service: apigateway.amazonaws.com
             Action: sts:AssumeRole
       Policies:
+        - PolicyName: "LambdaDynamoDBAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:*"
+                Resource: "*"
         - PolicyName: LambdaInvokePolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -129,17 +137,31 @@ Resources:
           Projection:
             ProjectionType: "ALL"
 
-  ChatsTable:
+    ChatsTable:
     Type: "AWS::DynamoDB::Table"
     Properties:
       TableName: "Chats"
       AttributeDefinitions:
         - AttributeName: "ChatID"
           AttributeType: "S"
+        - AttributeName: "UserID"
+          AttributeType: "S"
+        - AttributeName: "Timestamp"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "ChatID"
           KeyType: "HASH"
       BillingMode: "PAY_PER_REQUEST"
+      GlobalSecondaryIndexes:
+        - IndexName: "UserID-index"
+          KeySchema:
+            - AttributeName: "UserID"
+              KeyType: "HASH"
+            - AttributeName: "Timestamp"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+
 
   CreateChatLambda:
     Type: AWS::Serverless::Function
@@ -340,6 +362,97 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  GetChatsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "getChats"
+      RestApiId: !Ref ApiGateway
+
+  GetChatsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      ResourceId: !Ref GetChatsResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+        Credentials: !GetAtt ApiGatewayRole.Arn
+        RequestTemplates:
+          application/json: |
+            {
+              "TableName": "Chats",
+              "IndexName": "UserID-index",
+              "KeyConditionExpression": "UserID = :userID",
+              "ExpressionAttributeValues": {
+                ":userID": {
+                  "S": "$input.params('UserID')"
+                }
+              }
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "chats": [
+                    #foreach($item in $inputRoot.Items)
+                      {
+                        "ChatID": "$item.ChatID.S",
+                        "ChatName": "$item.ChatName.S",
+                        "ChatTopic": "$item.ChatTopic.S",
+                        "Timestamp": "$item.Timestamp.S"
+                      }#if($foreach.hasNext),#end
+                    #end
+                  ]
+                }
+          - StatusCode: 400
+            SelectionPattern: "4\\d{2}"
+            ResponseTemplates:
+              application/json: '{"error": "Invalid request"}'
+          - StatusCode: 500
+            SelectionPattern: "5\\d{2}"
+            ResponseTemplates:
+              application/json: '{"error": "Internal server error"}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: "Empty"
+        - StatusCode: 400
+          ResponseModels:
+            application/json: "Empty"
+        - StatusCode: 500
+          ResponseModels:
+            application/json: "Empty"
+
+  GetChatsOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref GetChatsResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     Properties:
@@ -352,6 +465,8 @@ Resources:
       - CreateChatOptionsMethod
       - GetUserMethod
       - GetUserOptionsMethod
+      - GetChatsMethod
+      - GetChatsOptionsMethod
 
 Outputs:
   ApiUrl:
@@ -360,7 +475,7 @@ Outputs:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
 
   GetUserUrl:
-    Description: "API Gateway endpoint URL for Prod stage"
+    Description: "API Gateway endpoint URL for GetUserUrl"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user"
 
@@ -368,3 +483,8 @@ Outputs:
     Description: "API Gateway endpoint URL for creating new chat"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat"
+
+  GetChatUrl:
+    Description: "API Gateway endpoint URL for GetChatUrl"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChats"
