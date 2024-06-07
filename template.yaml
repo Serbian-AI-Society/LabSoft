@@ -127,12 +127,14 @@ Resources:
       Environment:
         Variables:
           USERS_TABLE: !Ref
-      Events:
-        CognitoTrigger:
-          Type: Cognito
-          Properties:
-            UserPool: arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l
-            Trigger: PostConfirmation
+
+  CognitoUserPoolTrigger:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !GetAtt UserRegistrationLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "cognito-idp.amazonaws.com"
+      SourceArn: "arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l"
 
   AskLambda:
     Type: "AWS::Serverless::Function"
@@ -229,7 +231,7 @@ Resources:
                 "UserID": {
                   "S": "$input.params('UserID')"
                 }
-              }
+              }CognitoTrigger
             }
         IntegrationResponses:
           - StatusCode: 200
