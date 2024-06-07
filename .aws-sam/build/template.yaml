@@ -1,0 +1,395 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: LambdaDynamoDBAccessPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - dynamodb:*
+            Resource: '*'
+      - PolicyName: LambdaS3AndLogsPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:*
+            - logs:*
+            Resource: '*'
+      - PolicyName: LambdaSecretsManagerAccessPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - secretsmanager:GetSecretValue
+            Resource: arn:aws:secretsmanager:eu-central-1:637423332149:secret:Hakaton-YRpjI4
+  ApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: LambdaInvokePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            Resource:
+            - Fn::GetAtt:
+              - AskLambda
+              - Arn
+            - Fn::GetAtt:
+              - CreateChatLambda
+              - Arn
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      AttributeDefinitions:
+      - AttributeName: UserID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: UserID
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  LessonsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Lessons
+      AttributeDefinitions:
+      - AttributeName: LessonID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: LessonID
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  UserProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserProgress
+      AttributeDefinitions:
+      - AttributeName: UserID
+        AttributeType: S
+      - AttributeName: LessonID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: UserID
+        KeyType: HASH
+      - AttributeName: LessonID
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+  QuestionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Questions
+      AttributeDefinitions:
+      - AttributeName: QuestionID
+        AttributeType: S
+      - AttributeName: UserID
+        AttributeType: S
+      - AttributeName: ChatID
+        AttributeType: S
+      - AttributeName: Timestamp
+        AttributeType: S
+      KeySchema:
+      - AttributeName: QuestionID
+        KeyType: HASH
+      - AttributeName: UserID
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: ChatID-index
+        KeySchema:
+        - AttributeName: ChatID
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+  ChatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Chats
+      AttributeDefinitions:
+      - AttributeName: ChatID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: ChatID
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  CreateChatLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: create_chat.lambda_handler
+      Runtime: python3.11
+      CodeUri: CreateChatLambda
+      MemorySize: 128
+      Timeout: 600
+      Role:
+        Fn::GetAtt:
+        - LambdaRole
+        - Arn
+      Environment:
+        Variables:
+          CHATS_TABLE:
+            Ref: ChatsTable
+    Metadata:
+      SamResourceId: CreateChatLambda
+  AskLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      CodeUri: AskLambda
+      MemorySize: 512
+      Timeout: 600
+      Role:
+        Fn::GetAtt:
+        - LambdaRole
+        - Arn
+      Environment:
+        Variables:
+          QUESTION_TABLE:
+            Ref: QuestionsTable
+    Metadata:
+      SamResourceId: AskLambda
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name:
+        Fn::Sub: ${AWS::StackName}-API
+      Description: API Gateway for Ai Study Buddy application
+      FailOnWarnings: true
+  CreateChatResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - ApiGateway
+        - RootResourceId
+      PathPart: createChat
+      RestApiId:
+        Ref: ApiGateway
+  CreateChatMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: CreateChatResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateChatLambda.Arn}/invocations
+        Credentials:
+          Fn::GetAtt:
+          - ApiGatewayRole
+          - Arn
+      MethodResponses:
+      - StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+  CreateChatOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: CreateChatResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,PUT,GET'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Origin: true
+  AskResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - ApiGateway
+        - RootResourceId
+      PathPart: ask
+      RestApiId:
+        Ref: ApiGateway
+  AskInvokeLambda:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId:
+        Ref: AskResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AskLambda.Arn}/invocations
+        Credentials:
+          Fn::GetAtt:
+          - ApiGatewayRole
+          - Arn
+      MethodResponses:
+      - StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+  AskOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: AskResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,PUT,GET'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Origin: true
+  GetUserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - ApiGateway
+        - RootResourceId
+      PathPart: user
+      RestApiId:
+        Ref: ApiGateway
+  GetUserMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId:
+        Ref: GetUserResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem
+        Credentials:
+          Fn::GetAtt:
+          - ApiGatewayRole
+          - Arn
+        RequestTemplates:
+          application/json: "{\n  \"TableName\": \"Users\",\n  \"Key\": {\n    \"\
+            UserID\": {\n      \"S\": \"$input.params('UserID')\"\n    }\n  }CognitoTrigger\n\
+            }\n"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "#set($inputRoot = $input.path('$'))\n{\n  \"UserID\"\
+              : \"$inputRoot.Item.UserID.S\",\n  \"Email\": \"$inputRoot.Item.Email.S\"\
+              \n}\n"
+        - StatusCode: 400
+          SelectionPattern: '400'
+          ResponseTemplates:
+            application/json: '{"error": "Invalid request"}'
+      MethodResponses:
+      - StatusCode: 200
+      - StatusCode: 400
+  GetUserOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: GetUserResource
+      RestApiId:
+        Ref: ApiGateway
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,PUT,GET'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Origin: true
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      StageName: Prod
+    DependsOn:
+    - AskInvokeLambda
+    - AskOptionsMethod
+    - CreateChatMethod
+    - CreateChatOptionsMethod
+    - GetUserMethod
+    - GetUserOptionsMethod
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL for Prod stage
+    Value:
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask
+  GetUserUrl:
+    Description: API Gateway endpoint URL for Prod stage
+    Value:
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user
+  CreateChatUrl:
+    Description: API Gateway endpoint URL for creating new chat
+    Value:
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat
