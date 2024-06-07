@@ -3,7 +3,7 @@ name: Deploy Sphinx Docs to AWS S3
 on:
   push:
     branches:
-      - master
+      - main
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
