@@ -127,14 +127,12 @@ Resources:
       Environment:
         Variables:
           USERS_TABLE: !Ref UsersTable
-
-  CognitoUserPoolTrigger:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      FunctionName: !GetAtt UserRegistrationLambda.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: "cognito-idp.amazonaws.com"
-      SourceArn: "arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l"
+      Events:
+        CognitoTrigger:
+          Type: Cognito
+          Properties:
+            UserPool: "arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l"
+            Trigger: PostConfirmation
 
   AskLambda:
     Type: "AWS::Serverless::Function"

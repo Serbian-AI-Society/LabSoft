@@ -1,4 +1,5 @@
 import {
+  IonButton,
   IonContent,
   IonIcon,
   IonItem,
@@ -30,7 +31,7 @@ const Menu: React.FC<MenuProps> = ({ signOut, user }) => {
           <IonNote>{user.username}</IonNote>
         </IonList>
 
-        
+        <IonButton  expand="block" onClick={signOut}>Sign Out</IonButton>
       </IonContent>
     </IonMenu>
   );
