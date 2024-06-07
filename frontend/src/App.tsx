@@ -59,7 +59,7 @@ const App: React.FC = () => (
     {({ signOut, user }) => (
       <IonApp>
         <IonReactRouter>
-        <IonSplitPane contentId="main">
+        <IonSplitPane className="custom-split-pane" contentId="main">
           <Menu user={user} signOut={signOut}/>
           <IonRouterOutlet id="main">
             <Route path="/" exact={true}>
