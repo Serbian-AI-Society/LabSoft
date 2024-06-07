@@ -38,6 +38,27 @@ Resources:
                   - "secretsmanager:GetSecretValue"
                 Resource: "arn:aws:secretsmanager:eu-central-1:637423332149:secret:Hakaton-YRpjI4"
 
+  ApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt AskLambda.Arn
+
   UsersTable:
     Type: "AWS::DynamoDB::Table"
     Properties:
