@@ -144,7 +144,7 @@ Resources:
   CreateChatLambda:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: create_chat.lambda_handler
+      Handler: app.lambda_handler
       Runtime: python3.11
       CodeUri: ./backend/src/create_chat/
       MemorySize: 128
