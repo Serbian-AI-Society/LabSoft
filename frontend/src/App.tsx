@@ -39,10 +39,10 @@ Amplify.configure(aws_exports);
 setupIonicReact();
 
 const App: React.FC = () => {
-  const [selectedChat, setSelectedChat] = useState<{ chatId: string; chatName: string } | null>(null);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
 
-  const handleSelectChat = (chatId: string, chatName: string) => {
-    setSelectedChat({ chatId, chatName });
+  const handleSelectChat = (chatID: string) => {
+    setSelectedChat(chatID);
   };
 
   return (
