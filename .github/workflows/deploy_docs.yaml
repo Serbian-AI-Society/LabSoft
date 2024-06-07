@@ -44,8 +44,8 @@ jobs:
         aws s3 sync docs/build/html s3://${{ env.S3_BUCKET }} --delete
 
     - name: Set CloudFront Distribution ID
+      if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
       run: echo "CLOUDFRONT_DISTRIBUTION_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" >> $GITHUB_ENV
-      if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
     - name: Invalidate CloudFront (optional)
       if: env.CLOUDFRONT_DISTRIBUTION_ID
