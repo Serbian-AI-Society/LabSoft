@@ -126,7 +126,7 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          USERS_TABLE: !Ref
+          USERS_TABLE: !Ref UsersTable
 
   CognitoUserPoolTrigger:
     Type: "AWS::Lambda::Permission"
