@@ -64,9 +64,3 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-dark-shade: #3a3a3a;
   --ion-color-dark-tint: #5c5c5c;
 }
-
-/* Prilagodite širinu bočne ploče */
-.custom-split-pane .split-pane-side {
-  max-width: 250px; /* Postavite željenu maksimalnu širinu */
-  min-width: 250px; /* Postavite željenu minimalnu širinu */
-}

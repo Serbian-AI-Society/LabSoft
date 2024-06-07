@@ -13,7 +13,7 @@ import {
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
 import Menu from './components/Menu';
-import Page from './pages/Page';
+import Home from './pages/Home';
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
 
@@ -59,15 +59,15 @@ const App: React.FC = () => (
     {({ signOut, user }) => (
       <IonApp>
         <IonReactRouter>
-        <IonSplitPane className="custom-split-pane" contentId="main">
+        <IonSplitPane  when={false} className="custom-split-pane" contentId="main">
           <Menu user={user} signOut={signOut}/>
           <IonRouterOutlet id="main">
-            <Route path="/" exact={true}>
-              <Redirect to="/folder/Inbox" />
-            </Route>
-            <Route path="/folder/:name" exact={true}>
-              <Page />
-            </Route>
+          <Route
+                exact
+                path="/"
+                render={(props) => <Home {...props} user={user} />}
+              />
+          <Route render={() => <Redirect to="/" />} />
           </IonRouterOutlet>
         </IonSplitPane>
         </IonReactRouter>

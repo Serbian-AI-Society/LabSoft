@@ -1,18 +1,15 @@
 import {
   IonButton,
   IonContent,
-  IonIcon,
   IonItem,
   IonLabel,
   IonList,
   IonListHeader,
   IonMenu,
-  IonMenuToggle,
   IonNote,
 } from '@ionic/react';
 
 import { useLocation } from 'react-router-dom';
-import { archiveOutline, archiveSharp, bookmarkOutline, heartOutline, heartSharp, mailOutline, mailSharp, paperPlaneOutline, paperPlaneSharp, trashOutline, trashSharp, warningOutline, warningSharp } from 'ionicons/icons';
 import './Menu.css';
 
 interface MenuProps {
@@ -21,17 +18,18 @@ interface MenuProps {
 }
 
 const Menu: React.FC<MenuProps> = ({ signOut, user }) => {
-
-
   return (
     <IonMenu contentId="main" type="overlay">
       <IonContent>
         <IonList id="inbox-list">
-          <IonListHeader>Menu</IonListHeader>
-          <IonNote>{user.username}</IonNote>
+          <IonListHeader className="ion-padding">Menu</IonListHeader>
         </IonList>
 
-        <IonButton  expand="block" onClick={signOut}>Sign Out</IonButton>
+        <div className="sign-out-button">
+          <IonButton expand="block" onClick={signOut}>
+            Sign Out
+          </IonButton>
+        </div>
       </IonContent>
     </IonMenu>
   );
