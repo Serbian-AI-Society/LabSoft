@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Introduction and Goals &mdash; Study Buddy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #AE46DB" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/TransparentLogo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">1. Introduction and Goals</a><ul>
+<li><a class="reference internal" href="#requirements-overview">1.1. Requirements Overview</a></li>
+<li><a class="reference internal" href="#quality-goals">1.2. Quality Goals</a></li>
+<li><a class="reference internal" href="#stakeholders">1.3. Stakeholders</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#architecture-constraints">2. Architecture Constraints</a></li>
+<li><a class="reference internal" href="#system-scope-and-context">3. System Scope and Context</a><ul>
+<li><a class="reference internal" href="#business-context">3.1. Business Context</a></li>
+<li><a class="reference internal" href="#technical-context">3.2. Technical Context</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#solution-strategy">4. Solution Strategy</a></li>
+<li><a class="reference internal" href="#building-block-view">5. Building Block View</a><ul>
+<li><a class="reference internal" href="#system-context-c4">5.1. System Context - C4</a></li>
+<li><a class="reference internal" href="#containers-c3">5.2. Containers - C3</a></li>
+<li><a class="reference internal" href="#components-c2">5.3. Components - C2</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#runtime-view">6. Runtime View</a></li>
+<li><a class="reference internal" href="#deployment-view">7. Deployment View</a><ul>
+<li><a class="reference internal" href="#infrastructure-level-1">7.1. Infrastructure Level 1</a></li>
+<li><a class="reference internal" href="#infrastructure-level-2">7.2. Infrastructure Level 2</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cross-cutting-concepts">8. Cross-cutting Concepts</a></li>
+<li><a class="reference internal" href="#architecture-decisions">9. Architecture Decisions</a></li>
+<li><a class="reference internal" href="#quality-requirements">10. Quality Requirements</a><ul>
+<li><a class="reference internal" href="#quality-tree">10.1. Quality Tree</a></li>
+<li><a class="reference internal" href="#quality-scenarios">10.2. Quality Scenarios</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#risks-and-technical-debts">11. Risks and Technical Debts</a></li>
+<li><a class="reference internal" href="#glossary">12. Glossary</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #AE46DB" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Study Buddy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">1. Introduction and Goals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <ul class="simple">
+<li><p><a class="reference internal" href="#1-introduction-and-goals"><span class="xref myst">1. Introduction and Goals</span></a></p>
+<ul>
+<li><p><a class="reference internal" href="#11-requirements-overview"><span class="xref myst">1.1. Requirements Overview</span></a></p></li>
+<li><p><a class="reference internal" href="#12-quality-goals"><span class="xref myst">1.2. Quality Goals</span></a></p></li>
+<li><p><a class="reference internal" href="#13-stakeholders"><span class="xref myst">1.3. Stakeholders</span></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#2-architecture-constraints"><span class="xref myst">2. Architecture Constraints</span></a></p></li>
+<li><p><a class="reference internal" href="#3-system-scope-and-context"><span class="xref myst">3. System Scope and Context</span></a></p>
+<ul>
+<li><p><a class="reference internal" href="#31-business-context"><span class="xref myst">3.1. Business Context</span></a></p></li>
+<li><p><a class="reference internal" href="#32-technical-context"><span class="xref myst">3.2. Technical Context</span></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#4-solution-strategy"><span class="xref myst">4. Solution Strategy</span></a></p></li>
+<li><p><a class="reference internal" href="#5-building-block-view"><span class="xref myst">5. Building Block View</span></a></p>
+<ul>
+<li><p><a class="reference internal" href="#51-system-context---c4"><span class="xref myst">5.1. System Context - C4</span></a></p></li>
+<li><p><a class="reference internal" href="#52-containers---c3"><span class="xref myst">5.2. Containers - C3</span></a></p></li>
+<li><p><a class="reference internal" href="#53-components---c2"><span class="xref myst">5.3. Components - C2</span></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#6-runtime-view"><span class="xref myst">6. Runtime View</span></a></p></li>
+<li><p><a class="reference internal" href="#7-deployment-view"><span class="xref myst">7. Deployment View</span></a></p>
+<ul>
+<li><p><a class="reference internal" href="#71-infrastructure-level-1"><span class="xref myst">7.1. Infrastructure Level 1</span></a></p></li>
+<li><p><a class="reference internal" href="#72-infrastructure-level-2"><span class="xref myst">7.2. Infrastructure Level 2</span></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#8-cross-cutting-concepts"><span class="xref myst">8. Cross-cutting Concepts</span></a></p></li>
+<li><p><a class="reference internal" href="#9-architecture-decisions"><span class="xref myst">9. Architecture Decisions</span></a></p></li>
+<li><p><a class="reference internal" href="#10-quality-requirements"><span class="xref myst">10. Quality Requirements</span></a></p>
+<ul>
+<li><p><a class="reference internal" href="#101-quality-tree"><span class="xref myst">10.1. Quality Tree</span></a></p></li>
+<li><p><a class="reference internal" href="#102-quality-scenarios"><span class="xref myst">10.2. Quality Scenarios</span></a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#11-risks-and-technical-debts"><span class="xref myst">11. Risks and Technical Debts</span></a></p></li>
+<li><p><a class="reference internal" href="#12-glossary"><span class="xref myst">12. Glossary</span></a></p></li>
+</ul>
+<hr class="docutils" />
+<section id="introduction-and-goals">
+<h1>1. Introduction and Goals<a class="headerlink" href="#introduction-and-goals" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-1/ 
+</pre></div>
+</div>
+<section id="requirements-overview">
+<h2>1.1. Requirements Overview<a class="headerlink" href="#requirements-overview" title="Permalink to this heading"></a></h2>
+</section>
+<section id="quality-goals">
+<h2>1.2. Quality Goals<a class="headerlink" href="#quality-goals" title="Permalink to this heading"></a></h2>
+</section>
+<section id="stakeholders">
+<h2>1.3. Stakeholders<a class="headerlink" href="#stakeholders" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+<hr class="docutils" />
+<section id="architecture-constraints">
+<h1>2. Architecture Constraints<a class="headerlink" href="#architecture-constraints" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-2/
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="system-scope-and-context">
+<h1>3. System Scope and Context<a class="headerlink" href="#system-scope-and-context" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-3/ 
+</pre></div>
+</div>
+<section id="business-context">
+<h2>3.1. Business Context<a class="headerlink" href="#business-context" title="Permalink to this heading"></a></h2>
+</section>
+<section id="technical-context">
+<h2>3.2. Technical Context<a class="headerlink" href="#technical-context" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+<hr class="docutils" />
+<section id="solution-strategy">
+<h1>4. Solution Strategy<a class="headerlink" href="#solution-strategy" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-4/ 
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="building-block-view">
+<h1>5. Building Block View<a class="headerlink" href="#building-block-view" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-5/ 
+</pre></div>
+</div>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://c4model.com 
+</pre></div>
+</div>
+<section id="system-context-c4">
+<h2>5.1. System Context - C4<a class="headerlink" href="#system-context-c4" title="Permalink to this heading"></a></h2>
+</section>
+<section id="containers-c3">
+<h2>5.2. Containers - C3<a class="headerlink" href="#containers-c3" title="Permalink to this heading"></a></h2>
+</section>
+<section id="components-c2">
+<h2>5.3. Components - C2<a class="headerlink" href="#components-c2" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+<hr class="docutils" />
+<section id="runtime-view">
+<h1>6. Runtime View<a class="headerlink" href="#runtime-view" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-6/ 
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="deployment-view">
+<h1>7. Deployment View<a class="headerlink" href="#deployment-view" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-7/ 
+</pre></div>
+</div>
+<section id="infrastructure-level-1">
+<h2>7.1. Infrastructure Level 1<a class="headerlink" href="#infrastructure-level-1" title="Permalink to this heading"></a></h2>
+</section>
+<section id="infrastructure-level-2">
+<h2>7.2. Infrastructure Level 2<a class="headerlink" href="#infrastructure-level-2" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+<hr class="docutils" />
+<section id="cross-cutting-concepts">
+<h1>8. Cross-cutting Concepts<a class="headerlink" href="#cross-cutting-concepts" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-8/ 
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="architecture-decisions">
+<h1>9. Architecture Decisions<a class="headerlink" href="#architecture-decisions" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-9/ 
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="quality-requirements">
+<h1>10. Quality Requirements<a class="headerlink" href="#quality-requirements" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-10/ 
+</pre></div>
+</div>
+<section id="quality-tree">
+<h2>10.1. Quality Tree<a class="headerlink" href="#quality-tree" title="Permalink to this heading"></a></h2>
+</section>
+<section id="quality-scenarios">
+<h2>10.2. Quality Scenarios<a class="headerlink" href="#quality-scenarios" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+<hr class="docutils" />
+<section id="risks-and-technical-debts">
+<h1>11. Risks and Technical Debts<a class="headerlink" href="#risks-and-technical-debts" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-11/ 
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="glossary">
+<h1>12. Glossary<a class="headerlink" href="#glossary" title="Permalink to this heading"></a></h1>
+<div class="highlight-Markdown notranslate"><div class="highlight"><pre><span></span>https://docs.arc42.org/section-12/ 
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright MIT License.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
