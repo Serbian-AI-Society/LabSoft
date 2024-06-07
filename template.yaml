@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Resources:
+  LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: ["lambda.amazonaws.com"]
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: "LambdaDynamoDBAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:*"
+                Resource: "*"
+        - PolicyName: "LambdaS3AndLogsPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "s3:*"
+                  - "logs:*"
+                Resource: "*"
+        - PolicyName: "LambdaSecretsManagerAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource: "arn:aws:secretsmanager:eu-central-1:637423332149:secret:Hakaton-YRpjI4"
+
+  UsersTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "Users"
+      AttributeDefinitions:
+        - AttributeName: "UserID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "UserID"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+
+  LessonsTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "Lessons"
+      AttributeDefinitions:
+        - AttributeName: "LessonID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "LessonID"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+
+  UserProgressTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "UserProgress"
+      AttributeDefinitions:
+        - AttributeName: "UserID"
+          AttributeType: "S"
+        - AttributeName: "LessonID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "UserID"
+          KeyType: "HASH"
+        - AttributeName: "LessonID"
+          KeyType: "RANGE"
+      BillingMode: "PAY_PER_REQUEST"
+
+  QuestionsTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "Questions"
+      AttributeDefinitions:
+        - AttributeName: "QuestionID"
+          AttributeType: "S"
+        - AttributeName: "UserID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "QuestionID"
+          KeyType: "HASH"
+        - AttributeName: "UserID"
+          KeyType: "RANGE"
+      BillingMode: "PAY_PER_REQUEST"
+
+  AskLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: app.lambda_handler # Pretpostavimo da je handler definisan u app.py
+      Runtime: python3.11
+      CodeUri: ./backend/src/qalambda/
+      MemorySize: 512
+      Timeout: 600
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          TRANSCRIPTS_TABLE: !Ref QuestionsTable
+
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${AWS::StackName}-API"
+      Description: "API Gateway for Ai Study Buddy application"
+      FailOnWarnings: true
+
+  AskResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "ask"
+      RestApiId: !Ref ApiGateway
+
+  AskInvokeLambda:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      ResourceId: !Ref AskResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS_PROXY"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AskLambda.Arn}/invocations
+        Credentials: !GetAtt ApiGatewayRole.Arn
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  AskOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref AskResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PUT,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: "Prod"
+    DependsOn:
+      - AskInvokeLambda
+      - AskOptionsMethod
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
+    Export:
+      Name: "ApiUrl"
