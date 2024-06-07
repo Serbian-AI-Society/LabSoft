@@ -123,15 +123,15 @@ Resources:
       CodeUri: ../backend/src/user_registration/
       MemorySize: 128
       Timeout: 600
-      Role: !GetAtt UserRegistrationLambdaExecutionRole.Arn
+      Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          USERS_TABLE: !Ref UsersTable
+          USERS_TABLE: !Ref
       Events:
         CognitoTrigger:
           Type: Cognito
           Properties:
-            UserPool: !Ref CognitoUserPool
+            UserPool: arn:aws:cognito-idp:eu-central-1:637423332149:userpool/eu-central-1_ojoSECV5l
             Trigger: PostConfirmation
 
   AskLambda:
@@ -202,6 +202,76 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  GetUserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "user"
+      RestApiId: !Ref ApiGateway
+
+  GetUserMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "GET"
+      ResourceId: !Ref GetUserResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        Type: "AWS"
+        IntegrationHttpMethod: "POST"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem
+        Credentials: !GetAtt ApiGatewayRole.Arn
+        RequestTemplates:
+          application/json: |
+            {
+              "TableName": "Users",
+              "Key": {
+                "UserID": {
+                  "S": "$input.params('UserID')"
+                }
+              }
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "UserID": "$inputRoot.Item.UserID.S",
+                  "Email": "$inputRoot.Item.Email.S"
+                }
+          - StatusCode: 400
+            SelectionPattern: "400"
+            ResponseTemplates:
+              application/json: '{"error": "Invalid request"}'
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+
+  GetUserOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref GetUserResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PUT,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     Properties:
@@ -210,11 +280,20 @@ Resources:
     DependsOn:
       - AskInvokeLambda
       - AskOptionsMethod
+      - GetUserMethod
+      - GetUserOptionsMethod
 
 Outputs:
   ApiUrl:
     Description: "API Gateway endpoint URL for Prod stage"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
+    Export:
+      Name: "ApiUrl"
+
+  GetUserUrl:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user"
     Export:
       Name: "ApiUrl"
