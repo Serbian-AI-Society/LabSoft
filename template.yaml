@@ -120,7 +120,7 @@ Resources:
     Properties:
       Handler: app.lambda_handler
       Runtime: python3.11
-      CodeUri: ../backend/src/user_registration/
+      CodeUri: ./backend/src/user_registration/
       MemorySize: 128
       Timeout: 600
       Role: !GetAtt LambdaRole.Arn
