@@ -339,24 +339,42 @@ Resources:
                     #end
                   ]
                 }
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
           - StatusCode: 400
             SelectionPattern: "4\\d{2}"
             ResponseTemplates:
               application/json: '{"error": "Invalid request"}'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
           - StatusCode: 500
             SelectionPattern: "5\\d{2}"
             ResponseTemplates:
               application/json: '{"error": "Internal server error"}'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       MethodResponses:
         - StatusCode: 200
           ResponseModels:
             application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
         - StatusCode: 400
           ResponseModels:
             application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
         - StatusCode: 500
           ResponseModels:
             application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
 
   GetChatsOptionsMethod:
     Type: AWS::ApiGateway::Method
