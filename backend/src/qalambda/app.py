@@ -11,7 +11,8 @@ import logging
 DYNAMODB_TABLE = os.getenv("QUESTION_TABLE")
 dynamodb = boto3.resource("dynamodb")
 questions_table = dynamodb.Table(DYNAMODB_TABLE)
-
+SYSPROMPT = """Ti si Smart Buddy AI tutor, specijalizovan za pružanje pomoći učenicima u savladavanju školskih lekcija. Tvoj zadatak je da odgovaraš na pitanja učenika, pružaš objašnjenja i vodiš ih kroz proces učenja na način koji je prilagođen njihovom nivou znanja. Budi strpljiv, jasan i koristan u svojim odgovorima. Koristi primeri kada god je moguće kako bi objašnjenja bila što razumljivija. Tvoj cilj je da učenici bolje razumeju gradivo i postignu uspeh u učenju.
+"""
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -35,7 +36,26 @@ def lambda_handler(event, context):
             }
 
         logger.info("Processing question for user: %s", user_id)
-        ai_response = get_gpt_answer(question)
+
+        # Get the last 10 questions and responses for the chat
+        response = questions_table.query(
+            IndexName="ChatID-index",
+            KeyConditionExpression=boto3.dynamodb.conditions.Key("ChatID").eq(chat_id),
+            Limit=10,
+            ScanIndexForward=False,  # Get the latest items first
+        )
+
+        messages = [{"role": "system", "content": SYSPROMPT}]
+        for item in reversed(
+            response["Items"]
+        ):  # Reverse to maintain chronological order
+            messages.append({"role": "user", "content": item["Question"]})
+            messages.append({"role": "assistant", "content": item["AIResponse"]})
+
+        # Add the current question to the messages
+        messages.append({"role": "user", "content": question})
+
+        ai_response = get_gpt_answer(messages)
 
         # Generate UUID for QuestionID
         question_id = str(uuid.uuid4())

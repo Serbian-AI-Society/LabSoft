@@ -30,27 +30,21 @@ def get_secret():
 # Set the OpenAI API key from the Secrets Manager
 openai.api_key = get_secret()
 
-SYSPROMPT = """Ti si Smart Buddy AI tutor, specijalizovan za pružanje pomoći učenicima u savladavanju školskih lekcija. Tvoj zadatak je da odgovaraš na pitanja učenika, pružaš objašnjenja i vodiš ih kroz proces učenja na način koji je prilagođen njihovom nivou znanja. Budi strpljiv, jasan i koristan u svojim odgovorima. Koristi primeri kada god je moguće kako bi objašnjenja bila što razumljivija. Tvoj cilj je da učenici bolje razumeju gradivo i postignu uspeh u učenju.
-"""
 
-
-def get_gpt_answer(question):
-    if question == "":
-        logger.warning("Question is empty.")
+def get_gpt_answer(messages):
+    if not messages:
+        logger.warning("Messages list is empty.")
         return "Pitanje ne može biti prazno."
 
     logger.info("Calling OpenAI for Q&A")
     try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo-0125",
-            messages=[
-                {"role": "system", "content": SYSPROMPT},
-                {"role": "user", "content": question},
-            ],
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
             temperature=0,
         )
         logger.info("Received response from OpenAI")
-        return response.choices[0].message.content
+        return response.choices[0].message["content"]
     except Exception as e:
         logger.exception("Error calling OpenAI API: %s", str(e))
         return "Došlo je do greške prilikom pozivanja OpenAI API-ja. Pokušajte ponovo kasnije."

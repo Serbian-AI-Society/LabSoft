@@ -108,12 +108,25 @@ Resources:
           AttributeType: "S"
         - AttributeName: "UserID"
           AttributeType: "S"
+        - AttributeName: "ChatID"
+          AttributeType: "S"
+        - AttributeName: "Timestamp"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "QuestionID"
           KeyType: "HASH"
         - AttributeName: "UserID"
           KeyType: "RANGE"
       BillingMode: "PAY_PER_REQUEST"
+      GlobalSecondaryIndexes:
+        - IndexName: "ChatID-index"
+          KeySchema:
+            - AttributeName: "ChatID"
+              KeyType: "HASH"
+            - AttributeName: "Timestamp"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
 
   ChatsTable:
     Type: "AWS::DynamoDB::Table"
