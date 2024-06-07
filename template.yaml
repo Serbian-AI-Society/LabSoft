@@ -291,76 +291,6 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
-  GetUserResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: "user"
-      RestApiId: !Ref ApiGateway
-
-  GetUserMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: "NONE"
-      HttpMethod: "GET"
-      ResourceId: !Ref GetUserResource
-      RestApiId: !Ref ApiGateway
-      Integration:
-        Type: "AWS"
-        IntegrationHttpMethod: "POST"
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem
-        Credentials: !GetAtt ApiGatewayRole.Arn
-        RequestTemplates:
-          application/json: |
-            {
-              "TableName": "Users",
-              "Key": {
-                "UserID": {
-                  "S": "$input.params('UserID')"
-                }
-              }
-            }
-        IntegrationResponses:
-          - StatusCode: 200
-            ResponseTemplates:
-              application/json: |
-                #set($inputRoot = $input.path('$'))
-                {
-                  "UserID": "$inputRoot.Item.UserID.S",
-                  "Email": "$inputRoot.Item.Email.S"
-                }
-          - StatusCode: 400
-            SelectionPattern: "400"
-            ResponseTemplates:
-              application/json: '{"error": "Invalid request"}'
-      MethodResponses:
-        - StatusCode: 200
-        - StatusCode: 400
-
-  GetUserOptionsMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: "NONE"
-      HttpMethod: "OPTIONS"
-      ResourceId: !Ref GetUserResource
-      RestApiId: !Ref ApiGateway
-      Integration:
-        IntegrationResponses:
-          - StatusCode: 200
-            ResponseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PUT,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-        RequestTemplates:
-          application/json: '{"statusCode": 200}'
-        Type: MOCK
-      MethodResponses:
-        - StatusCode: 200
-          ResponseParameters:
-            method.response.header.Access-Control-Allow-Headers: true
-            method.response.header.Access-Control-Allow-Methods: true
-            method.response.header.Access-Control-Allow-Origin: true
-
   GetChatsResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -462,8 +392,6 @@ Resources:
       - AskOptionsMethod
       - CreateChatMethod
       - CreateChatOptionsMethod
-      - GetUserMethod
-      - GetUserOptionsMethod
       - GetChatsMethod
       - GetChatsOptionsMethod
 
@@ -472,11 +400,6 @@ Outputs:
     Description: "API Gateway endpoint URL for Prod stage"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
-
-  GetUserUrl:
-    Description: "API Gateway endpoint URL for GetUserUrl"
-    Value:
-      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user"
 
   CreateChatUrl:
     Description: "API Gateway endpoint URL for creating new chat"
