@@ -1,17 +1,12 @@
+import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
-  IonIcon,
-  IonLabel,
   IonRouterOutlet,
   IonSplitPane,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
 import Menu from './components/Menu';
 import Home from './pages/Home';
 /* Core CSS required for Ionic components to work properly */
@@ -30,17 +25,6 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
-
 /* Theme variables */
 import './theme/variables.css';
 import { Amplify } from 'aws-amplify';
@@ -54,26 +38,34 @@ Amplify.configure(aws_exports);
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <Authenticator className="ion-margin ion-padding">
-    {({ signOut, user }) => (
-      <IonApp>
-        <IonReactRouter>
-        <IonSplitPane  when={false} className="custom-split-pane" contentId="main">
-          <Menu user={user} signOut={signOut}/>
-          <IonRouterOutlet id="main">
-          <Route
-                exact
-                path="/"
-                render={(props) => <Home {...props} user={user} />}
-              />
-          <Route render={() => <Redirect to="/" />} />
-          </IonRouterOutlet>
-        </IonSplitPane>
-        </IonReactRouter>
-      </IonApp>
-    )}
-  </Authenticator>
-);
+const App: React.FC = () => {
+  const [selectedChat, setSelectedChat] = useState<{ chatId: string; chatName: string } | null>(null);
+
+  const handleSelectChat = (chatId: string, chatName: string) => {
+    setSelectedChat({ chatId, chatName });
+  };
+
+  return (
+    <Authenticator className="ion-margin ion-padding">
+      {({ signOut, user }) => (
+        <IonApp>
+          <IonReactRouter>
+            <IonSplitPane when={false} className="custom-split-pane" contentId="main">
+              <Menu user={user} signOut={signOut} onSelectChat={handleSelectChat} />
+              <IonRouterOutlet id="main">
+                <Route
+                  exact
+                  path="/"
+                  render={(props) => <Home {...props} user={user} selectedChat={selectedChat} />}
+                />
+                <Route render={() => <Redirect to="/" />} />
+              </IonRouterOutlet>
+            </IonSplitPane>
+          </IonReactRouter>
+        </IonApp>
+      )}
+    </Authenticator>
+  );
+};
 
 export default App;

@@ -318,7 +318,7 @@ Resources:
                 "UserID": {
                   "S": "$input.params('UserID')"
                 }
-              }CognitoTrigger
+              }
             }
         IntegrationResponses:
           - StatusCode: 200

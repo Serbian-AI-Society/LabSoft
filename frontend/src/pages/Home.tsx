@@ -5,16 +5,47 @@ import './Home.css';
 
 interface HomeProps {
   user: any;
+  selectedChat: { chatId: string; chatName: string } | null;
 }
 
-const Home: React.FC<HomeProps> = ({ user }) => {
+const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
   const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
   const [input, setInput] = useState('');
   const [waitingForResponse, setWaitingForResponse] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (selectedChat) {
+      // Fetch the chat history when a chat is selected
+      const fetchChatHistory = async () => {
+        try {
+          const response = await fetch('https://your-api-endpoint/getChatHistory', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              ChatID: selectedChat.chatId
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
+          setMessages(data.messages);
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+        }
+      };
+
+      fetchChatHistory();
+    }
+  }, [selectedChat]);
+
   const handleSend = async () => {
-    if (input.trim() === '' || waitingForResponse) return;
+    if (input.trim() === '' || waitingForResponse || !selectedChat) return;
 
     const newMessage = { text: input, sender: 'user' as const };
     setMessages([...messages, newMessage]);
@@ -22,14 +53,14 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     setWaitingForResponse(true);
 
     // Call the API to get the bot response
-    const botResponse = await getBotResponse(input);
+    const botResponse = await getBotResponse(input, selectedChat.chatId);
     const botMessage = { text: botResponse, sender: 'bot' as const };
     setMessages((prevMessages) => [...prevMessages, botMessage]);
     console.log(messages);
     setWaitingForResponse(false);
   };
 
-  const getBotResponse = async (question: string) => {
+  const getBotResponse = async (question: string, chatId: string) => {
     try {
       const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/ask', {
         method: 'POST',
@@ -38,6 +69,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
         },
         body: JSON.stringify({
           UserID: user.username,
+          ChatID: chatId,
           Question: question
         })
       });
@@ -73,7 +105,9 @@ const Home: React.FC<HomeProps> = ({ user }) => {
     <IonPage>
       <IonHeader>
         <IonToolbar color="primary">
-          <IonHeader className="ion-text-center" color='success'>Study Buddy</IonHeader>
+          <IonHeader className="ion-text-center" color='success'>
+            {selectedChat ? selectedChat.chatName : 'Study Buddy'}
+          </IonHeader>
           <IonButtons slot="start">
             <IonMenuButton />
           </IonButtons>

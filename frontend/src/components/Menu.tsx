@@ -14,24 +14,52 @@ import {
   IonTitle,
   IonButtons,
   IonIcon,
-  IonText,
 } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Menu.css';
 
 interface MenuProps {
   signOut: () => void;
   user: any;
+  onSelectChat: (chatId: string, chatName: string) => void;
 }
 
-const Menu: React.FC<MenuProps> = ({ signOut, user }) => {
+const Menu: React.FC<MenuProps> = ({ signOut, user, onSelectChat }) => {
   const [showModal, setShowModal] = useState(false);
   const [chatName, setChatName] = useState('');
   const [chatTopic, setChatTopic] = useState('');
+  const [chats, setChats] = useState<{ ChatID: string; ChatName: string }[]>([]);
+
+  useEffect(() => {
+    // Fetch the list of chats for the user
+    const fetchChats = async () => {
+      try {
+        const response = await fetch('https://your-api-endpoint/getChats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            UserID: user.username,
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setChats(data.chats);
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+      }
+    };
+
+    fetchChats();
+  }, [user.username]);
 
   const handleCreateChat = async () => {
-    // Call your API to create a new chat here
     try {
       const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/createChat', {
         method: 'POST',
@@ -50,7 +78,7 @@ const Menu: React.FC<MenuProps> = ({ signOut, user }) => {
       }
 
       const data = await response.json();
-      console.log('Chat created with ID:', data.ChatID);
+      setChats([...chats, { ChatID: data.ChatID, ChatName: chatName }]);
 
       // Close the modal and reset the form
       setShowModal(false);
@@ -69,6 +97,11 @@ const Menu: React.FC<MenuProps> = ({ signOut, user }) => {
           <IonItem button onClick={() => setShowModal(true)}>
             <IonLabel>Create New Chat</IonLabel>
           </IonItem>
+          {chats.map(chat => (
+            <IonItem button key={chat.ChatID} onClick={() => onSelectChat(chat.ChatID, chat.ChatName)}>
+              <IonLabel>{chat.ChatName}</IonLabel>
+            </IonItem>
+          ))}
         </IonList>
 
         <div className="sign-out-button">
