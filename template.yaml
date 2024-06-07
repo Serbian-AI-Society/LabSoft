@@ -58,6 +58,7 @@ Resources:
                   - lambda:InvokeFunction
                 Resource:
                   - !GetAtt AskLambda.Arn
+                  - !GetAtt CreateChatLambda.Arn
 
   UsersTable:
     Type: "AWS::DynamoDB::Table"
