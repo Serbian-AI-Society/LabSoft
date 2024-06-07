@@ -10,5 +10,5 @@ Welcome to Study Buddy's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   docs/source/architecture.md
-   docs/source/user_stories.md
+   architecture.md
+   user_stories.md

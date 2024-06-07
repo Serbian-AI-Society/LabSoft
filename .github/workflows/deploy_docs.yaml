@@ -44,12 +44,15 @@ jobs:
         aws s3 sync docs/build/html s3://${{ env.S3_BUCKET }} --delete
 
     - name: Check for CloudFront Distribution ID
+      id: check_cloudfront
       run: |
         if [ -n "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
-          echo "CLOUDFRONT_DISTRIBUTION_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" >> $GITHUB_ENV
+          echo "cloudfront_id_exists=true" >> $GITHUB_ENV
+        else
+          echo "cloudfront_id_exists=false" >> $GITHUB_ENV
         fi
 
     - name: Invalidate CloudFront (optional)
-      if: env.CLOUDFRONT_DISTRIBUTION_ID
+      if: env.cloudfront_id_exists == 'true'
       run: |
-        aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
