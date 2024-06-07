@@ -290,12 +290,8 @@ Outputs:
     Description: "API Gateway endpoint URL for Prod stage"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/ask"
-    Export:
-      Name: "ApiUrl"
 
   GetUserUrl:
     Description: "API Gateway endpoint URL for Prod stage"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/user"
-    Export:
-      Name: "ApiUrl"
