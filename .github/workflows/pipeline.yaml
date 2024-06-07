@@ -35,7 +35,7 @@ env:
 jobs:
   build-and-package:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: public.ecr.aws/sam/build-python3.11:1.117.0-20240521231228
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
@@ -71,7 +71,7 @@ jobs:
   deploy-prod:
     if: github.ref == 'refs/heads/main'
     needs: [build-and-package]
-    runs-on: ubuntu-latest
+    runs-on: public.ecr.aws/sam/build-python3.11:1.117.0-20240521231228
     # Configure GitHub Action Environment to have a manual approval step before deployment to production
     # https://docs.github.com/en/actions/reference/environments
     # environment: <configured-environment>
