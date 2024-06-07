@@ -41,7 +41,7 @@ jobs:
 
       - name: Sync to S3
         run: |
-          aws s3 sync docs/build/html s3://${{ env.S3_BUCKET }} --delete
+          aws s3 sync docs/build/html s3://${{ env.S3_BUCKET }} --delete --acl public-read
 
       - name: Check for CloudFront Distribution ID
         id: check_cloudfront
