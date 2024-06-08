@@ -302,14 +302,18 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: "NONE"
-      HttpMethod: "POST"
+      HttpMethod: "GET"
       ResourceId: !Ref GetChatsResource
       RestApiId: !Ref ApiGateway
+      RequestParameters:
+        method.request.querystring.UserID: true
       Integration:
         IntegrationHttpMethod: "POST"
         Type: "AWS"
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
         Credentials: !GetAtt ApiGatewayRole.Arn
+        RequestParameters:
+          integration.request.querystring.UserID: "method.request.querystring.UserID"
         RequestTemplates:
           application/json: |
             {
@@ -431,7 +435,7 @@ Resources:
               "KeyConditionExpression": "ChatID = :chatID",
               "ExpressionAttributeValues": {
                 ":chatID": {
-                  "S": "$input.params('querystring').ChatID"
+                  "S": "$input.params('ChatID')"
                 }
               },
               "ScanIndexForward": true

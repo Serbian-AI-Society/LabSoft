@@ -19,7 +19,7 @@ const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
       // Fetch the chat history when a chat is selected
       const fetchChatHistory = async () => {
         try {
-          const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getChatHistory?ChatID=${selectedChat.chatId}', {
+          const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getChatHistory?ChatID=${selectedChat.chatId}`, {
             method: 'GET',
           });
 
