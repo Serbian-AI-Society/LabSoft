@@ -18,7 +18,7 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
     const fetchMessages = async () => {
       if (chatID) {
         try {
-          const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getMessages?ChatID=${chatID}`, {
+          const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getChatHistory?ChatID=${chatID}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -28,13 +28,15 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
           }
-
           const data = await response.json();
-          const chatMessages = data.messages.map((msg: any) => ({
-            text: msg.Question + '\n' + msg.AIResponse,
-            sender: msg.UserID === user.username ? 'user' : 'bot',
-          }));
-          setMessages(chatMessages);
+
+          // Format the data for messages state
+          const formattedMessages = data.messages.map((item: any) => [
+            { text: item.Question, sender: 'user' as const },
+            { text: item.AIResponse, sender: 'bot' as const }
+          ]).flat();
+
+          setMessages(formattedMessages);
         } catch (error) {
           console.error('Error fetching messages:', error);
         }
@@ -42,10 +44,10 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
     };
 
     fetchMessages();
-  }, [chatID, user.username]);
+  }, [chatID]);
 
   const handleSend = async () => {
-    if (input.trim() === '' || waitingForResponse) return;
+    if (input.trim() === '' || waitingForResponse || !chatID) return;
 
     const newMessage = { text: input, sender: 'user' as const };
     setMessages([...messages, newMessage]);
@@ -60,6 +62,10 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
 
   const getBotResponse = async (question: string) => {
     try {
+      if (!user.username || !chatID) {
+        throw new Error('Missing user or chat ID');
+      }
+
       const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/ask', {
         method: 'POST',
         headers: {
