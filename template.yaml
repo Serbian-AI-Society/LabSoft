@@ -499,7 +499,7 @@ Resources:
               "KeyConditionExpression": "ChatID = :chatID",
               "ExpressionAttributeValues": {
                 ":chatID": {
-                  "S": "$input.params('querystring').ChatID"
+                  "S": "$input.params('ChatID')"
                 }
               },
               "ScanIndexForward": true
