@@ -5,22 +5,24 @@ import './Home.css';
 
 interface HomeProps {
   user: any;
-  selectedChat: { chatId: string; chatName: string } | null;
+  chatID: string | null;
 }
 
-const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
+const Home: React.FC<HomeProps> = ({ user, chatID }) => {
   const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
   const [input, setInput] = useState('');
   const [waitingForResponse, setWaitingForResponse] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (selectedChat) {
-      // Fetch the chat history when a chat is selected
-      const fetchChatHistory = async () => {
+    const fetchMessages = async () => {
+      if (chatID) {
         try {
-          const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getChatHistory?ChatID=${selectedChat.chatId}`, {
+          const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getMessages?ChatID=${chatID}`, {
             method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
 
           if (!response.ok) {
@@ -28,44 +30,46 @@ const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
           }
 
           const data = await response.json();
-          setMessages(data.messages);
+          const chatMessages = data.messages.map((msg: any) => ({
+            text: msg.Question + '\n' + msg.AIResponse,
+            sender: msg.UserID === user.username ? 'user' : 'bot',
+          }));
+          setMessages(chatMessages);
         } catch (error) {
-          console.error('Error fetching chat history:', error);
+          console.error('Error fetching messages:', error);
         }
-      };
+      }
+    };
 
-      fetchChatHistory();
-    }
-  }, [selectedChat]);
+    fetchMessages();
+  }, [chatID, user.username]);
 
   const handleSend = async () => {
-    if (input.trim() === '' || waitingForResponse || !selectedChat) return;
+    if (input.trim() === '' || waitingForResponse) return;
 
     const newMessage = { text: input, sender: 'user' as const };
     setMessages([...messages, newMessage]);
     setInput('');
     setWaitingForResponse(true);
 
-    // Call the API to get the bot response
-    const botResponse = await getBotResponse(input, selectedChat.chatId);
+    const botResponse = await getBotResponse(input);
     const botMessage = { text: botResponse, sender: 'bot' as const };
     setMessages((prevMessages) => [...prevMessages, botMessage]);
-    console.log(messages);
     setWaitingForResponse(false);
   };
 
-  const getBotResponse = async (question: string, chatId: string) => {
+  const getBotResponse = async (question: string) => {
     try {
       const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/ask', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           UserID: user.username,
-          ChatID: chatId,
-          Question: question
-        })
+          ChatID: chatID,
+          Question: question,
+        }),
       });
 
       if (!response.ok) {
@@ -99,8 +103,8 @@ const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
     <IonPage>
       <IonHeader>
         <IonToolbar color="primary">
-          <IonHeader className="ion-text-center" color='success'>
-            {selectedChat ? selectedChat.chatName : 'Study Buddy'}
+          <IonHeader className="ion-text-center" color="success">
+            Study Buddy
           </IonHeader>
           <IonButtons slot="start">
             <IonMenuButton />
@@ -129,7 +133,7 @@ const Home: React.FC<HomeProps> = ({ user, selectedChat }) => {
             <textarea
               value={input}
               placeholder="Type a message"
-              onChange={e => setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               className="input-field"
               rows={1}

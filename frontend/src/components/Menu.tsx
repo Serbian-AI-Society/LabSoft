@@ -22,8 +22,9 @@ import './Menu.css';
 interface MenuProps {
   signOut: () => void;
   user: any;
-  onSelectChat: (chatId: string, chatName: string) => void;
+  onSelectChat: (chatID: string) => void;
 }
+
 
 const Menu: React.FC<MenuProps> = ({ signOut, user, onSelectChat }) => {
   const [showModal, setShowModal] = useState(false);
@@ -95,7 +96,7 @@ const Menu: React.FC<MenuProps> = ({ signOut, user, onSelectChat }) => {
             <IonLabel>Create New Chat</IonLabel>
           </IonItem>
           {chats.map(chat => (
-            <IonItem button key={chat.ChatID} onClick={() => onSelectChat(chat.ChatID, chat.ChatName)}>
+            <IonItem button key={chat.ChatID} onClick={() => onSelectChat(chat.ChatID)}>
               <IonLabel>{chat.ChatName}</IonLabel>
             </IonItem>
           ))}
