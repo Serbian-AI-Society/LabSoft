@@ -95,7 +95,7 @@ def lambda_handler(event, context):
                 "QuestionID": question_id,
                 "UserID": user_id,
                 "ChatID": chat_id,
-                "question": "Generisi Test"
+                "question": "Generisi Test",
                 "Timestamp": current_time,
                 "AIResponse": ai_response,
             }
