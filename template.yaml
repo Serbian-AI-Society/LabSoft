@@ -436,7 +436,7 @@ Resources:
               "KeyConditionExpression": "ChatID = :chatID",
               "ExpressionAttributeValues": {
                 ":chatID": {
-                  "S": "$input.params('ChatID')"
+                  "S": "$input.params('querystring').ChatID"
                 }
               },
               "ScanIndexForward": true
@@ -451,12 +451,12 @@ Resources:
                   "messages": [
                     #foreach($item in $inputRoot.Items)
                       {
-                        "QuestionID": "$item.QuestionID.S",
-                        "UserID": "$item.UserID.S",
-                        "ChatID": "$item.ChatID.S",
-                        "Question": "$item.Question.S",
-                        "AIResponse": "$item.AIResponse.S",
-                        "Timestamp": "$item.Timestamp.S"
+                        "QuestionID": "$util.escapeJavaScript($item.QuestionID.S).replaceAll('\\n','')",
+                        "UserID": "$util.escapeJavaScript($item.UserID.S).replaceAll('\\n','')",
+                        "ChatID": "$util.escapeJavaScript($item.ChatID.S).replaceAll('\\n','')",
+                        "Question": "$util.escapeJavaScript($item.Question.S).replaceAll('\\n','')",
+                        "AIResponse": "$util.escapeJavaScript($item.AIResponse.S).replaceAll('\\n','')",
+                        "Timestamp": "$util.escapeJavaScript($item.Timestamp.S).replaceAll('\\n','')"
                       }#if($foreach.hasNext),#end
                     #end
                   ]
