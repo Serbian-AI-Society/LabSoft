@@ -123,10 +123,25 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
       }
 
       const data = await response.json();
-      const generatedMessage = { text: data.Response, sender: 'bot' as const };
+      const generatedMessage = formatQuizMessage(data.Response);
       setMessages((prevMessages) => [...prevMessages, generatedMessage]);
     } catch (error) {
       console.error('Error generating text:', error);
+    }
+  };
+
+  const formatQuizMessage = (response: string) => {
+    try {
+      const parsedResponse = JSON.parse(response);
+      const { pitanje, ponudjeni_odgovori } = parsedResponse;
+      const formattedText = `${pitanje}\n\n` +
+                            Object.entries(ponudjeni_odgovori)
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join('\n');
+      return { text: formattedText, sender: 'bot' as const };
+    } catch (error) {
+      console.error('Error parsing quiz response:', error);
+      return { text: 'There was an error generating the quiz.', sender: 'bot' as const };
     }
   };
 

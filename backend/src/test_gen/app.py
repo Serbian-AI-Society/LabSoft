@@ -77,8 +77,12 @@ def lambda_handler(event, context):
         for item in reversed(
             response["Items"]
         ):  # Reverse to maintain chronological order
-            messages.append({"role": "user", "content": item["Question"]})
-            messages.append({"role": "assistant", "content": item["AIResponse"]})
+            question = item.get("Question", "")
+            ai_response = item.get("AIResponse", "")
+            messages.append({"role": "user", "content": question if question else ""})
+            messages.append(
+                {"role": "assistant", "content": ai_response if ai_response else ""}
+            )
 
         ai_response = get_gpt_answer(messages)
 
