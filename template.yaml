@@ -414,6 +414,8 @@ Resources:
       HttpMethod: "GET"
       ResourceId: !Ref GetChatHistoryResource
       RestApiId: !Ref ApiGateway
+      RequestParameters:
+        method.request.querystring.ChatID: true
       Integration:
         IntegrationHttpMethod: "POST"
         Type: "AWS"
