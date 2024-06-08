@@ -7,12 +7,13 @@ from pytz import timezone
 from ai_response import get_gpt_answer
 import logging
 
-# Initialize DynamoDB resource
-DYNAMODB_TABLE = os.getenv("QUESTION_TABLE")
+# Initialize DynamoDB resources
+DYNAMODB_QUESTIONS_TABLE = os.getenv("QUESTION_TABLE")
+DYNAMODB_CHATS_TABLE = os.getenv("CHATS_TABLE")
 dynamodb = boto3.resource("dynamodb")
-questions_table = dynamodb.Table(DYNAMODB_TABLE)
-SYSPROMPT = """Ti si Smart Buddy AI tutor, specijalizovan za pružanje pomoći učenicima u savladavanju školskih lekcija. Tvoj zadatak je da odgovaraš na pitanja učenika, pružaš objašnjenja i vodiš ih kroz proces učenja na način koji je prilagođen njihovom nivou znanja. Budi strpljiv, jasan i koristan u svojim odgovorima. Koristi primeri kada god je moguće kako bi objašnjenja bila što razumljivija. Tvoj cilj je da učenici bolje razumeju gradivo i postignu uspeh u učenju.
-"""
+questions_table = dynamodb.Table(DYNAMODB_QUESTIONS_TABLE)
+chats_table = dynamodb.Table(DYNAMODB_CHATS_TABLE)
+
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -37,6 +38,17 @@ def lambda_handler(event, context):
 
         logger.info("Processing question for user: %s", user_id)
 
+        # Get chat topic from Chats table
+        chat_response = chats_table.get_item(Key={"ChatID": chat_id})
+        if "Item" not in chat_response:
+            logger.error("ChatID not found in Chats table")
+            return {
+                "statusCode": 404,
+                "body": json.dumps({"error": "ChatID not found"}),
+            }
+
+        chat_topic = chat_response["Item"]["ChatTopic"]
+
         # Get the last 10 questions and responses for the chat
         response = questions_table.query(
             IndexName="ChatID-index",
@@ -44,6 +56,22 @@ def lambda_handler(event, context):
             Limit=10,
             ScanIndexForward=False,  # Get the latest items first
         )
+
+        osnovna_skola = "Odgovaras uceniku osnovne skole. Potrudi se da odgovor bude zanimljiv i postavi dodatno pitanje da zainteresujes ucenika."
+        srednja_skola = "Odgovaras uceniku srednje skole. Potrudi se da odgovor bude na nivou znanja srednjoskolca."
+        fakultet = "Odgovaras studentu na fakultetu. Daj kompletan odgovor sa referencama. Pretrazi internet za najnovije clanke koji mu mogu pomoci u daljem istrazivanju."
+        nivo_znanja = fakultet
+
+        SYSPROMPT = f"""
+        Ti si mentor sa mnogo godina iskustva. Tema u kojoj si ekspert i mentor je data izmedju ***. 
+        Kad dobijes pitanje odgovori ako je pitanje iz te oblasti ako nije samo napisi "Pitanje nije iz oblasti u kojoj vam mogu pomoci".
+        Odgovaras iskljucivo na srpskom jeziku.
+        
+        {nivo_znanja}
+        
+        Tema je:
+        ***{chat_topic}***
+        """
 
         messages = [{"role": "system", "content": SYSPROMPT}]
         for item in reversed(

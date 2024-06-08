@@ -187,6 +187,7 @@ Resources:
       Environment:
         Variables:
           QUESTION_TABLE: !Ref QuestionsTable
+          CHATS_TABLE: !Ref ChatsTable
 
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
