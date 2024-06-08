@@ -1,2 +1,3 @@
 *.pptx#
 docs/build/html/*
+__pycache__
