@@ -32,8 +32,8 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
 
           // Format the data for messages state
           const formattedMessages = data.messages.map((item: any) => [
-            { text: item.Question, sender: 'user' as const },
-            { text: item.AIResponse, sender: 'bot' as const }
+            { text: item.Question.replace(/\\n/g, '\n'), sender: 'user' as const },
+            { text: item.AIResponse.replace(/\\n/g, '\n'), sender: 'bot' as const }
           ]).flat();
 
           setMessages(formattedMessages);

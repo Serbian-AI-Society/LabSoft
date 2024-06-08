@@ -67,6 +67,7 @@ Resources:
                 Resource:
                   - !GetAtt AskLambda.Arn
                   - !GetAtt CreateChatLambda.Arn
+                  - !GetAtt TestGenLambda.Arn
 
   UsersTable:
     Type: "AWS::DynamoDB::Table"
@@ -189,6 +190,20 @@ Resources:
           QUESTION_TABLE: !Ref QuestionsTable
           CHATS_TABLE: !Ref ChatsTable
 
+  TestGenLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: app.lambda_handler # Pretpostavimo da je handler definisan u app.py
+      Runtime: python3.11
+      CodeUri: ./backend/src/test_gen/
+      MemorySize: 512
+      Timeout: 600
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          QUESTION_TABLE: !Ref QuestionsTable
+          CHATS_TABLE: !Ref ChatsTable
+
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -274,6 +289,54 @@ Resources:
       AuthorizationType: "NONE"
       HttpMethod: "OPTIONS"
       ResourceId: !Ref AskResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,PUT,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  TestGenResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "gentest"
+      RestApiId: !Ref ApiGateway
+
+  TestGenInvokeLambda:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      ResourceId: !Ref TestGenResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS_PROXY"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestGenLambda.Arn}/invocations
+        Credentials: !GetAtt ApiGatewayRole.Arn
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  TestGenOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref TestGenResource
       RestApiId: !Ref ApiGateway
       Integration:
         IntegrationResponses:
@@ -557,3 +620,8 @@ Outputs:
     Description: "API Gateway endpoint URL for getting chat history"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChatHistory"
+
+  GetChatHistoryUrl:
+    Description: "API Gateway endpoint URL for getting chat history"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/gentest"
