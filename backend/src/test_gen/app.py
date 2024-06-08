@@ -25,9 +25,8 @@ def lambda_handler(event, context):
         body = json.loads(event.get("body", "{}"))
         user_id = body.get("UserID")
         chat_id = body.get("ChatID")
-        question = body.get("Question")
 
-        if not user_id or not question or not chat_id:
+        if not user_id or not chat_id:
             logger.error("Missing UserID, ChatID or Question in the request")
             return {
                 "statusCode": 400,
@@ -80,9 +79,6 @@ def lambda_handler(event, context):
         ):  # Reverse to maintain chronological order
             messages.append({"role": "user", "content": item["Question"]})
             messages.append({"role": "assistant", "content": item["AIResponse"]})
-
-        # Add the current question to the messages
-        messages.append({"role": "user", "content": question})
 
         ai_response = get_gpt_answer(messages)
 

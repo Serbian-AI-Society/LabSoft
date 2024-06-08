@@ -611,7 +611,7 @@ Outputs:
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat"
 
-  GetChatsUrl:
+  GetChatsUrl:testgentestgen
     Description: "API Gateway endpoint URL for getting user chats"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChats"

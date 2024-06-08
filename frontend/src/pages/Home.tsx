@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonToolbar, IonFooter, IonItem, IonIcon, IonCard, IonCardContent } from '@ionic/react';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonToolbar, IonFooter, IonItem, IonIcon, IonCard, IonCardContent, IonButton } from '@ionic/react';
 import { sendOutline } from 'ionicons/icons';
 import './Home.css';
 
@@ -101,6 +101,35 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleGenerateText = async () => {
+    try {
+      if (!user.username || !chatID) {
+        throw new Error('Missing user or chat ID');
+      }
+
+      const response = await fetch('https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/gentest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          UserID: user.username,
+          ChatID: chatID,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      const generatedMessage = { text: data.Response, sender: 'bot' as const };
+      setMessages((prevMessages) => [...prevMessages, generatedMessage]);
+    } catch (error) {
+      console.error('Error generating text:', error);
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -151,6 +180,9 @@ const Home: React.FC<HomeProps> = ({ user, chatID }) => {
               onClick={handleSend}
               style={{ pointerEvents: waitingForResponse ? 'none' : 'auto', cursor: waitingForResponse ? 'not-allowed' : 'pointer' }}
             />
+            <IonButton slot="end" onClick={handleGenerateText}>
+              Generate Test
+            </IonButton>
           </IonItem>
         </IonCard>
       </IonFooter>
