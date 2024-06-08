@@ -611,7 +611,7 @@ Outputs:
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat"
 
-  GetChatsUrl:testgentestgen
+  GetChatsUrl:
     Description: "API Gateway endpoint URL for getting user chats"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChats"
@@ -621,7 +621,7 @@ Outputs:
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChatHistory"
 
-  GetChatHistoryUrl:
+  GenTestHistoryUrl:
     Description: "API Gateway endpoint URL for getting chat history"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/gentest"
