@@ -411,7 +411,7 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: "NONE"
-      HttpMethod: "POST"
+      HttpMethod: "GET"
       ResourceId: !Ref GetChatHistoryResource
       RestApiId: !Ref ApiGateway
       Integration:
@@ -419,6 +419,8 @@ Resources:
         Type: "AWS"
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
         Credentials: !GetAtt ApiGatewayRole.Arn
+        RequestParameters:
+          integration.request.querystring.ChatID: "method.request.querystring.ChatID"
         RequestTemplates:
           application/json: |
             {
@@ -427,7 +429,7 @@ Resources:
               "KeyConditionExpression": "ChatID = :chatID",
               "ExpressionAttributeValues": {
                 ":chatID": {
-                  "S": "$input.params('ChatID')"
+                  "S": "$input.params('querystring').ChatID"
                 }
               },
               "ScanIndexForward": true
@@ -438,7 +440,7 @@ Resources:
               application/json: |
                 #set($inputRoot = $input.path('$'))
                 {
-                  "chatID": "$input.params('ChatID')",
+                  "chatID": "$input.params('querystring').ChatID",
                   "messages": [
                     #foreach($item in $inputRoot.Items)
                       {
