@@ -38,7 +38,7 @@ def get_gpt_answer(messages):
 
     logger.info("Calling OpenAI for Q&A")
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
             temperature=0,
