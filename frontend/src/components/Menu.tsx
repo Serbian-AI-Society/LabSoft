@@ -38,7 +38,7 @@ const Menu: React.FC<MenuProps> = ({ signOut, user, onSelectChat }) => {
         const response = await fetch(`https://225aetnmd3.execute-api.eu-central-1.amazonaws.com/Prod/getChats?UserID=${user.username}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
         });
 

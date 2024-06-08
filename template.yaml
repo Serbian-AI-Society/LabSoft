@@ -400,6 +400,119 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  GetChatHistoryResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "getChatHistory"
+      RestApiId: !Ref ApiGateway
+
+  GetChatHistoryMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "POST"
+      ResourceId: !Ref GetChatHistoryResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: "POST"
+        Type: "AWS"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query
+        Credentials: !GetAtt ApiGatewayRole.Arn
+        RequestTemplates:
+          application/json: |
+            {
+              "TableName": "Questions",
+              "IndexName": "ChatID-index",
+              "KeyConditionExpression": "ChatID = :chatID",
+              "ExpressionAttributeValues": {
+                ":chatID": {
+                  "S": "$input.params('ChatID')"
+                }
+              },
+              "ScanIndexForward": true
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                {
+                  "chatID": "$input.params('ChatID')",
+                  "messages": [
+                    #foreach($item in $inputRoot.Items)
+                      {
+                        "QuestionID": "$item.QuestionID.S",
+                        "UserID": "$item.UserID.S",
+                        "ChatID": "$item.ChatID.S",
+                        "Question": "$item.Question.S",
+                        "AIResponse": "$item.AIResponse.S",
+                        "Timestamp": "$item.Timestamp.S"
+                      }#if($foreach.hasNext),#end
+                    #end
+                  ]
+                }
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          - StatusCode: 400
+            SelectionPattern: "4\\d{2}"
+            ResponseTemplates:
+              application/json: '{"error": "Invalid request"}'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          - StatusCode: 500
+            SelectionPattern: "5\\d{2}"
+            ResponseTemplates:
+              application/json: '{"error": "Internal server error"}'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+        - StatusCode: 400
+          ResponseModels:
+            application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+        - StatusCode: 500
+          ResponseModels:
+            application/json: "Empty"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+
+  GetChatHistoryOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: "NONE"
+      HttpMethod: "OPTIONS"
+      ResourceId: !Ref GetChatHistoryResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     Properties:
@@ -412,6 +525,8 @@ Resources:
       - CreateChatOptionsMethod
       - GetChatsMethod
       - GetChatsOptionsMethod
+      - GetChatHistoryMethod
+      - GetChatHistoryOptionsMethod
 
 Outputs:
   ApiUrl:
@@ -424,7 +539,12 @@ Outputs:
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/createChat"
 
-  GetChatUrl:
-    Description: "API Gateway endpoint URL for GetChatUrl"
+  GetChatsUrl:
+    Description: "API Gateway endpoint URL for getting user chats"
     Value:
       Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChats"
+
+  GetChatHistoryUrl:
+    Description: "API Gateway endpoint URL for getting chat history"
+    Value:
+      Fn::Sub: "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/getChatHistory"
