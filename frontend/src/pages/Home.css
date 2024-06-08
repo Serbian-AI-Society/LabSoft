@@ -64,6 +64,7 @@
   border: 1px solid var(--ion-color-medium);
   border-radius: 10px;
   margin-right: 10px;
+  color: var(--ion-color-primary-contrast);
 }
 
 .input-field:focus {

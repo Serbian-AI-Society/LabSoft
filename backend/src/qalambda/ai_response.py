@@ -44,7 +44,7 @@ def get_gpt_answer(messages):
             temperature=0,
         )
         logger.info("Received response from OpenAI")
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content
     except Exception as e:
         logger.exception("Error calling OpenAI API: %s", str(e))
         return "Došlo je do greške prilikom pozivanja OpenAI API-ja. Pokušajte ponovo kasnije."
